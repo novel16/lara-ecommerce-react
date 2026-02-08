@@ -17,11 +17,11 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return ProductResource::collection(Product::all());
+        return ProductResource::collection(Product::latest()->paginate(10));
     }
 
     public function store(FormProductRequest $request)
-    {
+    {   
         $validated = $request->validated();
 
         // 👇 handle image upload

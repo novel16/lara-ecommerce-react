@@ -17,8 +17,12 @@ class Product extends Model
         'status',
     ];
 
-    public function products()
+    public function stocks()
     {
         return $this->hasMany(Stock::class);
+    }
+    public function productCartItems()
+    {
+        return $this->hasMany(CartItem::class);
     }
 }
