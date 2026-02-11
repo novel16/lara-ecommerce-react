@@ -14,6 +14,13 @@ class CartItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'product' => new ProductResource($this->product),
+            'quantity'=> $this->quantity,
+            'price'=> $this->price,
+            'created_at' => $this->created_at->format("Y-m-d"),
+            'updated_at'=> $this->updated_at->format("Y-m-d"),
+        ];
     }
 }

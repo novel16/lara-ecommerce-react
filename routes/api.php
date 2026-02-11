@@ -24,6 +24,15 @@ Route::prefix("V1")->group(function () {
     Route::post('addtocart', [CartController::class,'addToCart'])
         ->middleware('auth:sanctum');
 
+    Route::get('viewcart', [CartController::class,'viewCart'])
+        ->middleware('auth:sanctum');
+
+    Route::put('addqty/{cartItem}', [CartController::class,'increaseCartQty'])
+        ->middleware('auth:sanctum');
+
+    Route::put('minusqty/{cartItem}', [CartController::class,'decreaseCartQty'])
+        ->middleware('auth:sanctum');
+
     Route::prefix("admin")->middleware('auth:sanctum')->group(function () {
         Route::apiResource('products', App\Http\Controllers\V1\Admin\ProductController::class);
         Route::apiResource('stocks', App\Http\Controllers\V1\Admin\StockController::class);

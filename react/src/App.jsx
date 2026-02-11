@@ -15,6 +15,7 @@ import Categories from "./pages/base/Categories";
 import Contact from "./components/Contact";
 import Home from "./pages/base/Home";
 import ViewProduct from "./pages/base/ViewProduct";
+import Cart from "./pages/base/Cart";
 
 function App() {
     return (
@@ -30,6 +31,8 @@ function App() {
                     {/* Protected routes */}
                     <Route element={<ProtectedRoute />}>
                         <Route path="/myorders" element={<MyOrders />} />
+                        <Route path="/cart" element={<Cart />} />
+
                     </Route>
 
                     {/* Guest Layouts */}
