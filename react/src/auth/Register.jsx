@@ -23,6 +23,9 @@ function Register() {
             const response = await fetch("/api/V1/register", {
                 method: "POST",
                 body: JSON.stringify(formData),
+                headers: {
+                    "Content-Type": "application/json"
+                }
             });
 
             const data = await response.json();

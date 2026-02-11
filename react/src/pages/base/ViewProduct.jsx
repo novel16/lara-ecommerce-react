@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import NoImage from "../../assets/images/no-image.jpg"
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import NoImage from "../../assets/images/no-image.jpg";
 import { BASE_URL } from "../../components/config";
+import { AuthContext } from "../../context/AuthContext";
 
 function ViewProduct() {
     const [qty, setQty] = useState(1);
     const [product, setProduct] = useState({});
     const { id } = useParams();
+    const [loading, setLoading] = useState(false);
+    const { token } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const fetchProduct = async (id) => {
         try {
@@ -34,13 +38,48 @@ function ViewProduct() {
         if (qty > 1) setQty(qty - 1);
     };
 
+    const handleAddToCart = async () => {
+        // console.log("button is clicked")
+        setLoading(true);
+        try {
+            const response = await fetch("/api/V1/addtocart", {
+                method: "POST",
+                body: JSON.stringify({
+                    product_id: product.id,
+                    quantity: qty,
+                    price: product.price,
+                }),
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                navigate("/login");
+                return
+            }
+            console.log(data);
+        } catch (error) {
+            console.error("Error:", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-gray-50 py-12 px-6">
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
                 {/* LEFT - IMAGE */}
                 <div className="w-full h-[420px] bg-gray-100 rounded-xl overflow-hidden">
                     <img
-                        src={product.image ? `${BASE_URL}/storage/${product.image}`: NoImage}
+                        src={
+                            product.image
+                                ? `${BASE_URL}/storage/${product.image}`
+                                : NoImage
+                        }
                         alt={product.name}
                         className="w-full h-full object-cover"
                     />
@@ -96,8 +135,13 @@ function ViewProduct() {
                             Buy Now
                         </button>
 
-                        <button className="bg-gray-700 hover:bg-gray-800 cursor-pointer text-white px-6 py-3 rounded-lg w-full">
-                            Add to Cart
+                        <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => handleAddToCart()}
+                            className="bg-gray-700 hover:bg-gray-800 cursor-pointer text-white px-6 py-3 rounded-lg w-full"
+                        >
+                            {loading ? "Adding to Cart" : "Add to Cart"}
                         </button>
                     </div>
                 </div>

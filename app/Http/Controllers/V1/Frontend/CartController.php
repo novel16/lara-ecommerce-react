@@ -16,14 +16,23 @@ class CartController extends Controller
             'user_id' => Auth::id(),
         ]);
 
-        $cartItem = CartItem::create([
-            'cart_id' => $cart->id,
-            'product_id' => $request->product_id,
-            'quantity'=> $request->quantity,
-            'price'=> $request->price,
-        ]);
+        $cartItem = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        if ($cartItem) {
+            // Kung existing na, i-increment lang ang quantity
+            $cartItem->increment('quantity', $request->quantity);
+        } else {
+            // Kung wala pa, create new cart item
+            $cartItem = CartItem::create([
+                'cart_id' => $cart->id,
+                'product_id' => $request->product_id,
+                'quantity'  => $request->quantity,
+                'price'     => $request->price,
+            ]);
+        }
 
         return $cartItem;
-        
     }
 }

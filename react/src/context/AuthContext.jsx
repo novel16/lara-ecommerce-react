@@ -49,9 +49,9 @@ export default function AuthProvider({ children }) {
             //     localStorage.setItem('token', data.token)
             //     setToken(data.token)
             // }
-            if(response.ok){
+            // if(response.ok){
                 return data
-            }
+            // }
             
 
         } catch (error) {

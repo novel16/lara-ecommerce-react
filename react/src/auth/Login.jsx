@@ -27,7 +27,7 @@ function Login() {
         setToken(logData.token)
         navigate("/")
       } catch (error) {
-        console.error("Something went wrong:", error.message)
+        console.error("Something went wrong1:", error.message)
       }finally{
         setFlag(false)
       }
