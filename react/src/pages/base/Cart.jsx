@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { BASE_URL } from "../../components/config";
 import NoImage from "../../assets/images/no-image.jpg";
 import { AuthContext } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
 
 function Cart() {
     const [cartItems, setCartItems] = useState([]);
@@ -181,9 +182,12 @@ function Cart() {
                             Total: ₱{totalPrice}
                         </p>
 
-                        <button className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg">
+                        <Link
+                            to="/checkout"
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg"
+                        >
                             Checkout
-                        </button>
+                        </Link>
                     </div>
                 )}
             </div>

@@ -1,0 +1,408 @@
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+
+function Checkout() {
+    const [activeTab, setActiveTab] = useState("order");
+    const [payment, setPayment] = useState("cod");
+    const [carts, setCarts] = useState([]);
+    const { token } = useContext(AuthContext);
+    const [errors, setErrors] = useState({});
+    const [orderDetails, setOrderDetails] = useState({
+        guest_name: "",
+        guest_email: "",
+        guest_phone: "",
+        shipping_address: "",
+    });
+
+    const fetchCart = async () => {
+        try {
+            const response = await fetch("/api/V1/viewcart", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setCarts(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching cart:", error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchCart();
+    }, []);
+
+    const handlePlaceOrder = async () => {
+        try {
+            const response = await fetch("/api/V1/order", {
+                method: "POST",
+                body: JSON.stringify({
+                    ...orderDetails,
+                    payment_method: payment,
+                }),
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+            if (data.errors) {
+                setErrors(data.errors);
+            }
+            console.log(data);
+        } catch (error) {
+            console.error("Error:", error.message);
+        }
+    };
+
+    const totalPrice = carts.reduce(
+        (sum, item) => sum + item.quantity * item.price,
+        0,
+    );
+
+    console.log(payment);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 py-12 px-4 sm:px-6">
+            <div className="max-w-6xl mx-auto">
+                <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-xs uppercase tracking-[0.25em] text-amber-700">
+                            Secure Checkout
+                        </p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                            Finish your order
+                        </h1>
+                        <p className="text-sm text-slate-600">
+                            Fast delivery, easy returns, and real-time
+                            confirmation.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-slate-200">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        Encrypted payments and verified sellers
+                    </div>
+                </div>
+
+                {/* TABS HEADER */}
+                <div className="mb-8 flex w-full max-w-md rounded-full bg-white/70 p-1 ring-1 ring-slate-200 shadow-sm">
+                    <button
+                        onClick={() => setActiveTab("order")}
+                        className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                            activeTab === "order"
+                                ? "bg-slate-900 text-white shadow"
+                                : "text-slate-600 hover:text-slate-900"
+                        }`}
+                    >
+                        Order Details
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("payment")}
+                        className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                            activeTab === "payment"
+                                ? "bg-slate-900 text-white shadow"
+                                : "text-slate-600 hover:text-slate-900"
+                        }`}
+                    >
+                        Payment
+                    </button>
+                </div>
+
+                {/* TAB CONTENT */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8">
+                    {/* LEFT COLUMN (MAIN CONTENT) */}
+                    <div className="rounded-2xl bg-white/90 p-6 sm:p-8 shadow-xl ring-1 ring-slate-200">
+                        <div className="mb-6 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-slate-900">
+                                {activeTab === "order"
+                                    ? "Shipping and Contact"
+                                    : "Payment Details"}
+                            </h2>
+                            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                                {activeTab === "order"
+                                    ? "Step 1 of 2"
+                                    : "Step 2 of 2"}
+                            </span>
+                        </div>
+
+                        {activeTab === "order" && (
+                            <div className="space-y-5 text-slate-700">
+                                <div>
+                                    <p className="text-sm font-semibold">
+                                        Shipping Address
+                                    </p>
+                                    <textarea
+                                        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                                        rows="3"
+                                        value={orderDetails.shipping_address}
+                                        onChange={(e) =>
+                                            setOrderDetails({
+                                                ...orderDetails,
+                                                shipping_address:
+                                                    e.target.value,
+                                            })
+                                        }
+                                        placeholder="Enter your shipping address"
+                                    />
+                                    {errors?.shipping_address && (
+                                        <p className="text-red-500 text-sm mt-1">
+                                            {errors.shipping_address?.[0]}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm font-semibold">
+                                            Full Name
+                                        </p>
+                                        <input
+                                            type="text"
+                                            value={orderDetails.guest_name}
+                                            onChange={(e) =>
+                                                setOrderDetails({
+                                                    ...orderDetails,
+                                                    guest_name: e.target.value,
+                                                })
+                                            }
+                                            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                                            placeholder="Juan Dela Cruz"
+                                        />
+                                        {errors?.guest_name && (
+                                            <p className="text-red-500 text-sm mt-1">
+                                                {errors.guest_name?.[0]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm font-semibold">
+                                            Phone
+                                        </p>
+                                        <input
+                                            type="text"
+                                            value={orderDetails.guest_phone}
+                                            onChange={(e) =>
+                                                setOrderDetails({
+                                                    ...orderDetails,
+                                                    guest_phone: e.target.value,
+                                                })
+                                            }
+                                            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                                            placeholder="0917-123-4567"
+                                        />
+                                        {errors?.guest_phone && (
+                                            <p className="text-red-500 text-sm mt-1">
+                                                {errors.guest_phone?.[0]}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p className="text-sm font-semibold">
+                                        Email
+                                    </p>
+                                    <input
+                                        type="email"
+                                        value={orderDetails.guest_email}
+                                        onChange={(e) =>
+                                            setOrderDetails({
+                                                ...orderDetails,
+                                                guest_email: e.target.value,
+                                            })
+                                        }
+                                        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                                        placeholder="juan@example.com"
+                                    />
+                                    {errors?.guest_email && (
+                                        <p className="text-red-500 text-sm mt-1">
+                                            {errors.guest_email?.[0]}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 p-4 text-sm text-amber-900">
+                                    <p className="font-semibold">
+                                        Delivery estimate
+                                    </p>
+                                    <p className="mt-1 text-amber-800">
+                                        Metro Manila: 1-2 days. Provincial: 3-5
+                                        days.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "payment" && (
+                            <div className="space-y-5 text-slate-700">
+                                <div>
+                                    <p className="text-sm font-semibold">
+                                        Select Payment Method
+                                    </p>
+                                    <select
+                                        onChange={(e) =>
+                                            setPayment(e.target.value)
+                                        }
+                                        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                                    >
+                                        <option value="cod">
+                                            Cash on Delivery
+                                        </option>
+                                        <option value="card">
+                                            Credit Card
+                                        </option>
+                                    </select>
+                                </div>
+
+                                {/* onchange content */}
+                                {payment === "card" && (
+                                    <div>
+                                        <h3>Credit card</h3>
+                                        <CardElement />
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm">
+                                        <p className="font-semibold text-slate-900">
+                                            Wallets
+                                        </p>
+                                        <p className="mt-1 text-slate-600">
+                                            GCash and PayPal supported.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm">
+                                        <p className="font-semibold text-slate-900">
+                                            Cards
+                                        </p>
+                                        <p className="mt-1 text-slate-600">
+                                            Visa, Mastercard, Amex.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-200">
+                                    <p className="font-semibold mb-2 text-slate-700">
+                                        Payment Notes
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                                            <p className="font-semibold text-slate-800">
+                                                COD
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Pay on delivery
+                                            </p>
+                                        </div>
+                                        <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                                            <p className="font-semibold text-slate-800">
+                                                GCash
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Instant confirm
+                                            </p>
+                                        </div>
+                                        <div className="rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                                            <p className="font-semibold text-slate-800">
+                                                Card
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Secure gateway
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* RIGHT COLUMN (SUMMARY) */}
+                    <div className="h-fit rounded-2xl bg-slate-900 p-6 sm:p-8 text-white shadow-xl ring-1 ring-slate-900/20 lg:sticky lg:top-6">
+                        <h2 className="text-xl font-bold">Order Summary</h2>
+                        <p className="mt-1 text-sm text-slate-300">
+                            Review your items before placing the order.
+                        </p>
+
+                        <div className="mt-6 space-y-4 text-sm">
+                            {carts.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex justify-between text-slate-200"
+                                >
+                                    <span>
+                                        {item.product.name} x {item.quantity}
+                                    </span>
+                                    <span>
+                                        PHP {item.price * item.quantity}
+                                    </span>
+                                </div>
+                            ))}
+
+                            <div className="h-px bg-slate-700" />
+
+                            <div className="flex justify-between font-semibold text-slate-100">
+                                <span>Subtotal</span>
+                                <span>PHP {totalPrice}</span>
+                            </div>
+
+                            <div className="flex justify-between text-slate-200">
+                                <span>Shipping</span>
+                                <span>PHP 40.00</span>
+                            </div>
+
+                            <div className="rounded-lg bg-slate-800/70 p-3">
+                                <p className="text-xs text-slate-300">
+                                    Have a promo code?
+                                </p>
+                                <div className="mt-2 flex gap-2">
+                                    <input
+                                        className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100 outline-none focus:border-amber-400"
+                                        placeholder="ENTER CODE"
+                                    />
+                                    <button className="rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-900">
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-slate-700" />
+
+                            <div className="flex justify-between text-lg font-bold">
+                                <span>Total</span>
+                                <span>PHP {totalPrice}</span>
+                            </div>
+
+                            {errors?.out_of_stock && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {errors.out_of_stock?.[0]}
+                                </p>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => handlePlaceOrder()}
+                                className="mt-2 cursor-pointer w-full rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-amber-500/30 transition hover:bg-amber-300"
+                            >
+                                Place Order
+                            </button>
+
+                            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                                <span>Free returns within 7 days</span>
+                                <span>Support 24/7</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Checkout;

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\V1\Frontend\CartController;
 use App\Http\Controllers\V1\Frontend\FrontendController;
+use App\Http\Controllers\V1\Frontend\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,9 @@ Route::prefix("V1")->group(function () {
         ->middleware('auth:sanctum');
 
     Route::put('minusqty/{cartItem}', [CartController::class,'decreaseCartQty'])
+        ->middleware('auth:sanctum');
+
+    Route::post('order', [OrderController::class,'order'])
         ->middleware('auth:sanctum');
 
     Route::prefix("admin")->middleware('auth:sanctum')->group(function () {

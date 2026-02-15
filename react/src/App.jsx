@@ -16,15 +16,24 @@ import Contact from "./components/Contact";
 import Home from "./pages/base/Home";
 import ViewProduct from "./pages/base/ViewProduct";
 import Cart from "./pages/base/Cart";
+import Checkout from "./pages/base/Checkout";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 
 function App() {
+    const stripePromise = loadStripe(
+        "pk_test_51RxTbdE7eVJgEcnfRaNqsWgDwrU0QgMEWHpTskdFhcuXPisreujDPLwQJf27OfApmFQzXvz0y5RgiDpn08kdVPN900N1JUVzvT",
+    );
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<BaseLayout />}>
                     <Route index element={<Home />} />
                     <Route path="/products" element={<Products />} />
-                    <Route path="/products/:id/:slug" element={<ViewProduct />} />
+                    <Route
+                        path="/products/:id/:slug"
+                        element={<ViewProduct />}
+                    />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/contact" element={<Contact />} />
 
@@ -32,7 +41,14 @@ function App() {
                     <Route element={<ProtectedRoute />}>
                         <Route path="/myorders" element={<MyOrders />} />
                         <Route path="/cart" element={<Cart />} />
-
+                        <Route
+                            path="/checkout"
+                            element={
+                                <Elements stripe={stripePromise}>
+                                    <Checkout />
+                                </Elements>
+                            }
+                        />
                     </Route>
 
                     {/* Guest Layouts */}

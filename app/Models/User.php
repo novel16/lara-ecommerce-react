@@ -26,7 +26,7 @@ class User extends Authenticatable
 
     public function cart()
     {
-        require $this->hasOne(Cart::class);
+        return $this->hasOne(Cart::class);
     }
 
     /**
