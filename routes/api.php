@@ -37,6 +37,9 @@ Route::prefix("V1")->group(function () {
     Route::post('order', [OrderController::class,'order'])
         ->middleware('auth:sanctum');
 
+     Route::put('payment-confirm/{order}', [OrderController::class,'markAsPaid'])
+        ->middleware('auth:sanctum');
+
     Route::prefix("admin")->middleware('auth:sanctum')->group(function () {
         Route::apiResource('products', App\Http\Controllers\V1\Admin\ProductController::class);
         Route::apiResource('stocks', App\Http\Controllers\V1\Admin\StockController::class);

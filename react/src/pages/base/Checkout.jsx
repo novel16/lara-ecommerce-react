@@ -1,13 +1,18 @@
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function Checkout() {
+    const stripe = useStripe();
+    const elements = useElements();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("order");
-    const [payment, setPayment] = useState("cod");
+    const [payment, setPayment] = useState("");
     const [carts, setCarts] = useState([]);
     const { token } = useContext(AuthContext);
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
     const [orderDetails, setOrderDetails] = useState({
         guest_name: "",
         guest_email: "",
@@ -38,6 +43,8 @@ function Checkout() {
     }, []);
 
     const handlePlaceOrder = async () => {
+        setLoading(true);
+
         try {
             const response = await fetch("/api/V1/order", {
                 method: "POST",
@@ -54,10 +61,51 @@ function Checkout() {
             const data = await response.json();
             if (data.errors) {
                 setErrors(data.errors);
+                return;
             }
-            console.log(data);
+
+            if (payment === "") {
+                alert("Please select payment method");
+                setLoading(false);
+                return;
+            }
+
+            if (payment === "card") {
+                const { error, paymentIntent } =
+                    await stripe.confirmCardPayment(data.clientSecret, {
+                        payment_method: {
+                            card: elements.getElement(CardElement),
+                        },
+                    });
+
+                if (error) {
+                    // console.log("Error:", error.message);
+                    alert(error.message);
+                    return;
+                } else {
+                    if (paymentIntent.status === "succeeded") {
+                        // alert("Payment successful!");
+                        // console.log("paymentIntent:", paymentIntent);
+                        await fetch(
+                            `/api/V1/payment-confirm/${data.order_id}`,
+                            {
+                                method: "PUT",
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                    "Content-Type": "application/json",
+                                },
+                            },
+                        );
+                    }
+                }
+            }
+            if (response.ok) {
+                navigate("/thank-you");
+            }
         } catch (error) {
             console.error("Error:", error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -251,8 +299,12 @@ function Checkout() {
                                         onChange={(e) =>
                                             setPayment(e.target.value)
                                         }
+                                        value={payment}
                                         className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
                                     >
+                                        <option value="">
+                                            - Select payment -
+                                        </option>
                                         <option value="cod">
                                             Cash on Delivery
                                         </option>
@@ -388,9 +440,10 @@ function Checkout() {
                             <button
                                 type="button"
                                 onClick={() => handlePlaceOrder()}
+                                disabled={loading}
                                 className="mt-2 cursor-pointer w-full rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-amber-500/30 transition hover:bg-amber-300"
                             >
-                                Place Order
+                                {loading ? "Placing Order..." : "Place Order"}
                             </button>
 
                             <div className="mt-3 flex items-center justify-between text-xs text-slate-400">

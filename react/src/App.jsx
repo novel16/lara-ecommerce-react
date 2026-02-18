@@ -19,6 +19,7 @@ import Cart from "./pages/base/Cart";
 import Checkout from "./pages/base/Checkout";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import ThankYou from "./pages/base/ThankYou";
 
 function App() {
     const stripePromise = loadStripe(
@@ -49,6 +50,7 @@ function App() {
                                 </Elements>
                             }
                         />
+                        <Route path="/thank-you" element={<ThankYou />} />
                     </Route>
 
                     {/* Guest Layouts */}
