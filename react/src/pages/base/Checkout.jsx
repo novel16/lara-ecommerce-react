@@ -3,6 +3,8 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+const SHIPPING_FEE = 15;
+
 function Checkout() {
     const stripe = useStripe();
     const elements = useElements();
@@ -20,7 +22,38 @@ function Checkout() {
         shipping_address: "",
     });
 
+    const formatPHP = (value) =>
+        new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+        }).format(value);
+
+    const handleOrderFieldChange = (field) => (event) => {
+        const value = event.target.value;
+        setOrderDetails((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+
+        setErrors((prev) => ({
+            ...prev,
+            [field]: undefined,
+        }));
+    };
+
+    const handlePaymentChange = (event) => {
+        setPayment(event.target.value);
+        setErrors((prev) => ({
+            ...prev,
+            payment_method: undefined,
+        }));
+    };
+
     const fetchCart = async () => {
+        if (!token) {
+            return;
+        }
+
         try {
             const response = await fetch("/api/V1/viewcart", {
                 headers: {
@@ -40,9 +73,33 @@ function Checkout() {
 
     useEffect(() => {
         fetchCart();
-    }, []);
+    }, [token]);
 
     const handlePlaceOrder = async () => {
+        if (loading || carts.length === 0) {
+            return;
+        }
+
+        setErrors({});
+
+        if (!payment) {
+            setErrors({
+                payment_method: ["Please select a payment method."],
+            });
+            setActiveTab("payment");
+            return;
+        }
+
+        if (payment === "card" && (!stripe || !elements)) {
+            setErrors({
+                payment_method: [
+                    "Card payment is still loading. Please try again in a moment.",
+                ],
+            });
+            setActiveTab("payment");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -59,18 +116,34 @@ function Checkout() {
             });
 
             const data = await response.json();
+
             if (data.errors) {
                 setErrors(data.errors);
+
+                if (
+                    data.errors.payment_method ||
+                    data.errors.card ||
+                    data.errors.clientSecret
+                ) {
+                    setActiveTab("payment");
+                } else {
+                    setActiveTab("order");
+                }
+
                 return;
             }
 
-            if (payment === "") {
-                alert("Please select payment method");
-                setLoading(false);
+            if (!response.ok) {
+                alert(data.message || "Unable to place order. Please try again.");
                 return;
             }
 
             if (payment === "card") {
+                if (!data.clientSecret) {
+                    alert("Missing payment details. Please try again.");
+                    return;
+                }
+
                 const { error, paymentIntent } =
                     await stripe.confirmCardPayment(data.clientSecret, {
                         payment_method: {
@@ -79,29 +152,25 @@ function Checkout() {
                     });
 
                 if (error) {
-                    // console.log("Error:", error.message);
                     alert(error.message);
                     return;
-                } else {
-                    if (paymentIntent.status === "succeeded") {
-                        // alert("Payment successful!");
-                        // console.log("paymentIntent:", paymentIntent);
-                        await fetch(
-                            `/api/V1/payment-confirm/${data.order_id}`,
-                            {
-                                method: "PUT",
-                                headers: {
-                                    Authorization: `Bearer ${token}`,
-                                    "Content-Type": "application/json",
-                                },
-                            },
-                        );
-                    }
                 }
+
+                if (paymentIntent?.status !== "succeeded") {
+                    alert("Card payment did not complete. Please try again.");
+                    return;
+                }
+
+                await fetch(`/api/V1/payment-confirm/${data.order_id}`, {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
             }
-            if (response.ok) {
-                navigate("/thank-you");
-            }
+
+            navigate("/thank-you");
         } catch (error) {
             console.error("Error:", error.message);
         } finally {
@@ -109,12 +178,11 @@ function Checkout() {
         }
     };
 
-    const totalPrice = carts.reduce(
+    const subtotal = carts.reduce(
         (sum, item) => sum + item.quantity * item.price,
         0,
     );
-
-    console.log(payment);
+    const total = subtotal + (carts.length > 0 ? SHIPPING_FEE : 0);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 py-12 px-4 sm:px-6">
@@ -190,13 +258,9 @@ function Checkout() {
                                         className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
                                         rows="3"
                                         value={orderDetails.shipping_address}
-                                        onChange={(e) =>
-                                            setOrderDetails({
-                                                ...orderDetails,
-                                                shipping_address:
-                                                    e.target.value,
-                                            })
-                                        }
+                                        onChange={handleOrderFieldChange(
+                                            "shipping_address",
+                                        )}
                                         placeholder="Enter your shipping address"
                                     />
                                     {errors?.shipping_address && (
@@ -214,12 +278,9 @@ function Checkout() {
                                         <input
                                             type="text"
                                             value={orderDetails.guest_name}
-                                            onChange={(e) =>
-                                                setOrderDetails({
-                                                    ...orderDetails,
-                                                    guest_name: e.target.value,
-                                                })
-                                            }
+                                            onChange={handleOrderFieldChange(
+                                                "guest_name",
+                                            )}
                                             className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
                                             placeholder="Juan Dela Cruz"
                                         />
@@ -237,12 +298,9 @@ function Checkout() {
                                         <input
                                             type="text"
                                             value={orderDetails.guest_phone}
-                                            onChange={(e) =>
-                                                setOrderDetails({
-                                                    ...orderDetails,
-                                                    guest_phone: e.target.value,
-                                                })
-                                            }
+                                            onChange={handleOrderFieldChange(
+                                                "guest_phone",
+                                            )}
                                             className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
                                             placeholder="0917-123-4567"
                                         />
@@ -261,12 +319,9 @@ function Checkout() {
                                     <input
                                         type="email"
                                         value={orderDetails.guest_email}
-                                        onChange={(e) =>
-                                            setOrderDetails({
-                                                ...orderDetails,
-                                                guest_email: e.target.value,
-                                            })
-                                        }
+                                        onChange={handleOrderFieldChange(
+                                            "guest_email",
+                                        )}
                                         className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
                                         placeholder="juan@example.com"
                                     />
@@ -296,9 +351,7 @@ function Checkout() {
                                         Select Payment Method
                                     </p>
                                     <select
-                                        onChange={(e) =>
-                                            setPayment(e.target.value)
-                                        }
+                                        onChange={handlePaymentChange}
                                         value={payment}
                                         className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
                                     >
@@ -312,13 +365,21 @@ function Checkout() {
                                             Credit Card
                                         </option>
                                     </select>
+                                    {errors?.payment_method && (
+                                        <p className="text-red-500 text-sm mt-1">
+                                            {errors.payment_method?.[0]}
+                                        </p>
+                                    )}
                                 </div>
 
-                                {/* onchange content */}
                                 {payment === "card" && (
-                                    <div>
-                                        <h3>Credit card</h3>
-                                        <CardElement />
+                                    <div className="rounded-lg border border-slate-200 bg-white p-4">
+                                        <h3 className="text-sm font-semibold text-slate-900">
+                                            Credit card
+                                        </h3>
+                                        <div className="mt-3 rounded-md border border-slate-200 p-3">
+                                            <CardElement />
+                                        </div>
                                     </div>
                                 )}
 
@@ -393,7 +454,7 @@ function Checkout() {
                                         {item.product.name} x {item.quantity}
                                     </span>
                                     <span>
-                                        PHP {item.price * item.quantity}
+                                        {formatPHP(item.price * item.quantity)}
                                     </span>
                                 </div>
                             ))}
@@ -402,12 +463,12 @@ function Checkout() {
 
                             <div className="flex justify-between font-semibold text-slate-100">
                                 <span>Subtotal</span>
-                                <span>PHP {totalPrice}</span>
+                                <span>{formatPHP(subtotal)}</span>
                             </div>
 
                             <div className="flex justify-between text-slate-200">
                                 <span>Shipping</span>
-                                <span>PHP 40.00</span>
+                                <span>{formatPHP(carts.length > 0 ? SHIPPING_FEE : 0)}</span>
                             </div>
 
                             <div className="rounded-lg bg-slate-800/70 p-3">
@@ -429,7 +490,7 @@ function Checkout() {
 
                             <div className="flex justify-between text-lg font-bold">
                                 <span>Total</span>
-                                <span>PHP {totalPrice}</span>
+                                <span>{formatPHP(total)}</span>
                             </div>
 
                             {errors?.out_of_stock && (
@@ -440,7 +501,7 @@ function Checkout() {
                             <button
                                 type="button"
                                 onClick={() => handlePlaceOrder()}
-                                disabled={loading}
+                                disabled={loading || carts.length === 0}
                                 className="mt-2 cursor-pointer w-full rounded-xl bg-amber-400 px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-amber-500/30 transition hover:bg-amber-300"
                             >
                                 {loading ? "Placing Order..." : "Place Order"}

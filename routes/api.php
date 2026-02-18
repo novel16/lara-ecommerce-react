@@ -6,10 +6,7 @@ use App\Http\Controllers\V1\Frontend\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
-
-
-Route::prefix("V1")->group(function () {
+Route::prefix('V1')->group(function () {
 
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -22,25 +19,27 @@ Route::prefix("V1")->group(function () {
     // frontend routes
     Route::get('products', [FrontendController::class, 'index'])->name('products');
     Route::get('products/{product}', [FrontendController::class, 'viewProduct'])->name('products');
-    Route::post('addtocart', [CartController::class,'addToCart'])
+    Route::post('addtocart', [CartController::class, 'addToCart'])
         ->middleware('auth:sanctum');
 
-    Route::get('viewcart', [CartController::class,'viewCart'])
+    Route::get('viewcart', [CartController::class, 'viewCart'])
         ->middleware('auth:sanctum');
 
-    Route::put('addqty/{cartItem}', [CartController::class,'increaseCartQty'])
+    Route::put('addqty/{cartItem}', [CartController::class, 'increaseCartQty'])
         ->middleware('auth:sanctum');
 
-    Route::put('minusqty/{cartItem}', [CartController::class,'decreaseCartQty'])
+    Route::put('minusqty/{cartItem}', [CartController::class, 'decreaseCartQty'])
         ->middleware('auth:sanctum');
 
-    Route::post('order', [OrderController::class,'order'])
+    Route::post('order', [OrderController::class, 'order'])
         ->middleware('auth:sanctum');
 
-     Route::put('payment-confirm/{order}', [OrderController::class,'markAsPaid'])
+    Route::put('payment-confirm/{order}', [OrderController::class, 'markAsPaid'])
         ->middleware('auth:sanctum');
 
-    Route::prefix("admin")->middleware('auth:sanctum')->group(function () {
+    Route::post('webhooks/stripe', [OrderController::class, 'stripeWebhook']);
+
+    Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::apiResource('products', App\Http\Controllers\V1\Admin\ProductController::class);
         Route::apiResource('stocks', App\Http\Controllers\V1\Admin\StockController::class);
     });
