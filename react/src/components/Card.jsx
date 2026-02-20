@@ -1,34 +1,50 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import NoImage from "../assets/images/no-image.jpg";
 import { BASE_URL } from "./config";
-import NoImage from "../assets/images/no-image.jpg"
-
 
 function Card({ product }) {
+    const formattedPrice = new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+    }).format(Number(product.price || 0));
+
+    const isInStock = Number(product.stock_quantity) > 0;
+
     return (
         <Link
             to={`/products/${product.id}/${product.slug}`}
-            className="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden group"
+            className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-900/10"
         >
-            {/* IMAGE */}
-            <div className="w-full h-40 md:h-48 bg-gray-100 overflow-hidden">
+            <div className="h-40 w-full overflow-hidden bg-slate-100 md:h-48">
                 <img
-                    src={product.image ? `${BASE_URL}/storage/${product.image}`: NoImage}
+                    src={
+                        product.image
+                            ? `${BASE_URL}/storage/${product.image}`
+                            : NoImage
+                    }
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
             </div>
 
-            {/* CONTENT */}
-            <div className="p-3 md:p-4">
-                <h2 className="text-sm md:text-base font-semibold text-gray-800 truncate">
+            <div className="space-y-2 p-3 md:p-4">
+                <h2 className="truncate text-sm font-semibold text-slate-900 md:text-base">
                     {product.name}
                 </h2>
 
-                <p className="text-gray-700 font-bold mt-1">₱{product.price}</p>
+                <p className="text-base font-bold text-cyan-700 md:text-lg">
+                    {formattedPrice}
+                </p>
 
-                <p className="text-xs text-gray-500 mt-1">
-                    {product.stock_quantity > 0
+                <p
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        isInStock
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-rose-100 text-rose-700"
+                    }`}
+                >
+                    {isInStock
                         ? `${product.stock_quantity} in stock`
                         : "Out of stock"}
                 </p>

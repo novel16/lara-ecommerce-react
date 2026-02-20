@@ -2,106 +2,106 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 function Contact() {
+    const quickLinks = [
+        { to: "/", label: "Home" },
+        { to: "/products", label: "Products" },
+        { to: "/categories", label: "Categories" },
+        { to: "/contact", label: "Contact" },
+    ];
+
     return (
-        <div className="bg-gray-800 text-white p-10">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* SECTION 1 - Contact Info */}
-                <div>
-                    <h2 className="text-xl font-bold mb-4">Contact Info</h2>
+        <section className="border-t border-slate-200 bg-[radial-gradient(circle_at_top_left,_#0f172a,_#082f49_45%,_#020617)] px-4 py-10 text-slate-100 md:px-8 md:py-14">
+            <div className="mx-auto max-w-7xl">
+                <div className="mb-6 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+                    Need help with your order? Reach us anytime and we will get
+                    back to you within 24 hours.
+                </div>
 
-                    {/* EMAIL */}
-                    <div className="flex items-center gap-2 mb-3">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-5 h-5"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.906a2.25 2.25 0 01-1.07-1.916V6.75"
-                            />
-                        </svg>
-                        <span>lapaychavez1996@gmail.com</span>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_0.8fr_1.2fr]">
+                    <div className="space-y-4">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+                            Contact Hub
+                        </div>
+                        <h2 className="text-2xl font-bold md:text-3xl">
+                            Let's stay connected
+                        </h2>
+                        <p className="max-w-md text-sm leading-relaxed text-slate-300">
+                            For product questions, delivery concerns, or order
+                            updates, our support team is ready to assist you.
+                        </p>
+
+                        <div className="space-y-2 text-sm">
+                            <p className="rounded-xl border border-slate-700/70 bg-slate-900/40 px-3 py-2">
+                                Email: <span className="font-semibold">lapaychavez1996@gmail.com</span>
+                            </p>
+                            <p className="rounded-xl border border-slate-700/70 bg-slate-900/40 px-3 py-2">
+                                Phone: <span className="font-semibold">09924028116</span>
+                            </p>
+                            <p className="rounded-xl border border-slate-700/70 bg-slate-900/40 px-3 py-2">
+                                Hours: <span className="font-semibold">Mon-Sat, 8:00 AM - 7:00 PM</span>
+                            </p>
+                        </div>
                     </div>
 
-                    {/* PHONE */}
-                    <div className="flex items-center gap-2">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-5 h-5"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102A1.125 1.125 0 006.027 2.25H4.5A2.25 2.25 0 002.25 4.5v2.25z"
+                    <div className="rounded-2xl border border-slate-700/70 bg-slate-900/40 p-5">
+                        <h3 className="text-sm font-semibold uppercase tracking-wide text-cyan-200">
+                            Quick Navigation
+                        </h3>
+                        <div className="mt-3 flex flex-col gap-1">
+                            {quickLinks.map((link) => (
+                                <Link
+                                    key={link.to}
+                                    to={link.to}
+                                    className="rounded-lg px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800 hover:text-cyan-200"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-800 shadow-xl shadow-black/20 md:p-6">
+                        <h3 className="text-lg font-bold text-slate-900">
+                            Send us a message
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                            We value your feedback. Fill this form and we will
+                            contact you shortly.
+                        </p>
+
+                        <form className="mt-4 space-y-3">
+                            <input
+                                type="email"
+                                placeholder="Your email"
+                                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
                             />
-                        </svg>
-                        <span>09924028116</span>
+                            <input
+                                type="text"
+                                placeholder="Subject"
+                                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                            />
+                            <textarea
+                                placeholder="Write your message..."
+                                rows="4"
+                                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                            />
+
+                            <button
+                                type="submit"
+                                className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                            >
+                                Submit Message
+                            </button>
+                        </form>
                     </div>
                 </div>
 
-                {/* SECTION 2 - Nav Links */}
-                <div>
-                    <h2 className="text-xl font-bold mb-4">Navigation</h2>
-                    <div className="flex flex-col space-y-2">
-                        <Link to="/" className="hover:underline">
-                            Home
-                        </Link>
-                        <Link to="/products" className="hover:underline">
-                            Products
-                        </Link>
-                        <Link to="/categories" className="hover:underline">
-                            Categories
-                        </Link>
-                        <Link to="/contact" className="hover:underline">
-                            Contact Us
-                        </Link>
-                    </div>
-                </div>
-
-                {/* SECTION 3 - Message Form (WHITE CARD) */}
-                <div className="bg-white text-black p-6 rounded-lg shadow-lg">
-                    <h2 className="text-xl font-bold mb-4 text-gray-800">
-                        Send a Message
-                    </h2>
-
-                    <form className="flex flex-col space-y-3">
-                        <input
-                            type="email"
-                            placeholder="Your email"
-                            className="p-2 border border-gray-300 rounded"
-                        />
-
-                        <input
-                            type="text"
-                            placeholder="Subject"
-                            className="p-2 border border-gray-300 rounded"
-                        />
-
-                        <textarea
-                            placeholder="Your message"
-                            rows="4"
-                            className="p-2 border border-gray-300 rounded"
-                        ></textarea>
-
-                        <button
-                            type="submit"
-                            className="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded mt-2"
-                        >
-                            Submit
-                        </button>
-                    </form>
+                <div className="mt-8 border-t border-slate-700/80 pt-4 text-xs text-slate-400">
+                    © {new Date().getFullYear()} E-Commerce App. All rights
+                    reserved.
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
 

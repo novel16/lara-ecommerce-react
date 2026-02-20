@@ -3,15 +3,24 @@ import { AuthContext } from "../context/AuthContext";
 import { Navigate, Outlet } from "react-router-dom";
 
 function AdminRoute() {
-    const { user } = useContext(AuthContext);
+    const { user, token, authLoading } = useContext(AuthContext);
 
-    if (!user && user) {
+    if (authLoading) {
+        return (
+            <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
+                Loading...
+            </div>
+        );
+    }
+
+    if (!token || !user) {
         return <Navigate to="/login" replace />;
     }
 
-    if (user && user?.role !== "admin") {
+    if (user.role !== "admin") {
         return <Navigate to="/" replace />;
     }
+
     return <Outlet />;
 }
 

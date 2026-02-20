@@ -1,4 +1,10 @@
-import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+    CardCvcElement,
+    CardExpiryElement,
+    CardNumberElement,
+    useElements,
+    useStripe,
+} from "@stripe/react-stripe-js";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +21,7 @@ function Checkout() {
     const { token } = useContext(AuthContext);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [cardZipCode, setCardZipCode] = useState("");
     const [orderDetails, setOrderDetails] = useState({
         guest_name: "",
         guest_email: "",
@@ -27,6 +34,21 @@ function Checkout() {
             style: "currency",
             currency: "PHP",
         }).format(value);
+
+    const stripeElementOptions = {
+        style: {
+            base: {
+                color: "#0f172a",
+                fontSize: "14px",
+                "::placeholder": {
+                    color: "#94a3b8",
+                },
+            },
+            invalid: {
+                color: "#ef4444",
+            },
+        },
+    };
 
     const handleOrderFieldChange = (field) => (event) => {
         const value = event.target.value;
@@ -42,10 +64,27 @@ function Checkout() {
     };
 
     const handlePaymentChange = (event) => {
-        setPayment(event.target.value);
+        const selectedPaymentMethod = event.target.value;
+        setPayment(selectedPaymentMethod);
+
+        if (selectedPaymentMethod !== "card") {
+            setCardZipCode("");
+        }
+
         setErrors((prev) => ({
             ...prev,
             payment_method: undefined,
+            card: undefined,
+            card_zip: undefined,
+        }));
+    };
+
+    const handleCardZipCodeChange = (event) => {
+        setCardZipCode(event.target.value);
+        setErrors((prev) => ({
+            ...prev,
+            card: undefined,
+            card_zip: undefined,
         }));
     };
 
@@ -100,6 +139,14 @@ function Checkout() {
             return;
         }
 
+        if (payment === "card" && !cardZipCode.trim()) {
+            setErrors({
+                card_zip: ["Please enter your ZIP or postal code."],
+            });
+            setActiveTab("payment");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -144,15 +191,38 @@ function Checkout() {
                     return;
                 }
 
+                const cardNumberElement = elements.getElement(CardNumberElement);
+
+                if (!cardNumberElement) {
+                    setErrors({
+                        card: [
+                            "Card details are not ready yet. Please refresh and try again.",
+                        ],
+                    });
+                    setActiveTab("payment");
+                    return;
+                }
+
                 const { error, paymentIntent } =
                     await stripe.confirmCardPayment(data.clientSecret, {
                         payment_method: {
-                            card: elements.getElement(CardElement),
+                            card: cardNumberElement,
+                            billing_details: {
+                                name: orderDetails.guest_name || undefined,
+                                email: orderDetails.guest_email || undefined,
+                                phone: orderDetails.guest_phone || undefined,
+                                address: {
+                                    postal_code: cardZipCode.trim(),
+                                },
+                            },
                         },
                     });
 
                 if (error) {
-                    alert(error.message);
+                    setErrors({
+                        card: [error.message || "Card payment failed."],
+                    });
+                    setActiveTab("payment");
                     return;
                 }
 
@@ -377,8 +447,74 @@ function Checkout() {
                                         <h3 className="text-sm font-semibold text-slate-900">
                                             Credit card
                                         </h3>
-                                        <div className="mt-3 rounded-md border border-slate-200 p-3">
-                                            <CardElement />
+                                        <div className="mt-3 space-y-4">
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                                                    Card Number
+                                                </p>
+                                                <div className="mt-1 rounded-md border border-slate-200 px-3 py-3">
+                                                    <CardNumberElement
+                                                        options={
+                                                            stripeElementOptions
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                                                        Expiration
+                                                    </p>
+                                                    <div className="mt-1 rounded-md border border-slate-200 px-3 py-3">
+                                                        <CardExpiryElement
+                                                            options={
+                                                                stripeElementOptions
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                                                        CVC
+                                                    </p>
+                                                    <div className="mt-1 rounded-md border border-slate-200 px-3 py-3">
+                                                        <CardCvcElement
+                                                            options={
+                                                                stripeElementOptions
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                                                    ZIP / Postal Code
+                                                </p>
+                                                <input
+                                                    type="text"
+                                                    value={cardZipCode}
+                                                    onChange={
+                                                        handleCardZipCodeChange
+                                                    }
+                                                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                                                    placeholder="1000"
+                                                />
+                                            </div>
+
+                                            {errors?.card && (
+                                                <p className="text-red-500 text-sm">
+                                                    {Array.isArray(errors.card)
+                                                        ? errors.card[0]
+                                                        : errors.card}
+                                                </p>
+                                            )}
+                                            {errors?.card_zip && (
+                                                <p className="text-red-500 text-sm">
+                                                    {errors.card_zip?.[0]}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 )}
